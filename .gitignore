@@ -1,0 +1,16 @@
+/src
+/pkg
+/mesa
+/*.tar.zst
+/*.tar.zst.sig
+/*.tar.gz
+/*.tar.xz
+/*.log
+/*.log.*
+# /*-build.log
+# /*-prepare.log
+# /*-prepare.log.*
+# /*-build.log.*
+/*.sig
+/logpipe.*
+

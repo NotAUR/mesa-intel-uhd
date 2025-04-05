@@ -1,0 +1,38 @@
+[binaries]
+#
+# LLVM
+#
+# c = 'clang'
+# cpp = 'clang++'
+# ar = 'llvm-ar'
+# nm = 'llvm-nm'
+# objcopy = 'llvm-objcopy'
+# objdump = 'llvm-objdump'
+# strip = 'llvm-strip'
+
+#
+# GCC
+#
+c = 'gcc'
+cpp = 'g++'
+ar = 'ar'
+nm = 'nm'
+objcopy = 'objcopy'
+objdump = 'objdump'
+strip = 'strip'
+llvm-config = 'llvm-config'
+
+# pkg-config
+pkg-config = 'pkg-config'
+
+# CUPS
+cups-config = 'cups-config'
+
+# Rust
+rust = 'rustc'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'
