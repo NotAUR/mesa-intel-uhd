@@ -22,17 +22,10 @@
 
 # See: https://gitlab.archlinux.org/archlinux/packaging/packages/mesa/-/blob/1dba0cd7ec1c4fd4152467696d1584885452fb81/PKGBUILD
 
-pkgname=(
-  # vulkan-mesa-layers
-  # vulkan-intel
-  # vulkan-swrast
-  # vulkan-virtio
-  mesa-intel
-  lib32-mesa-intel
-)
+pkgname=mesa-intel-uhd-730
 pkgrel=1
 pkgver=25.0.3
-arch=('x86_64' 'i686')
+arch=('x86_64')
 makedepends=(
   clang
   directx-headers
@@ -88,6 +81,57 @@ makedepends=(
   python-sphinx
   python-sphinx-hawkmoth
 )
+
+depends=(
+  expat
+  gcc-libs
+  glibc
+  libdrm
+  libelf
+  libglvnd
+  libx11
+  libxcb
+  libxext
+  libxshmfence
+  libxxf86vm
+  llvm-libs
+  lm_sensors
+  spirv-tools
+  wayland
+  zlib
+  zstd
+  libpng
+  libva
+)
+provides=(
+  'vulkan-mesa-layers'
+  'opencl-driver'
+  'opengl-driver'
+  'vulkan-driver'
+  'vulkan-intel'
+  'vulkan-nouveau'
+  'vulkan-radeon'
+  'vulkan-swrast'
+  'vulkan-virtio'
+  'libva-mesa-driver'
+  'mesa-vdpau'
+  'mesa-libgl'
+  'mesa'
+)
+conflicts=(
+  'vulkan-mesa-layers'
+  'opencl-clover-mesa'
+  'vulkan-intel'
+  'vulkan-nouveau'
+  'vulkan-radeon'
+  'vulkan-swrast'
+  'vulkan-virtio'
+  'libva-mesa-driver'
+  'mesa-vdpau'
+  'mesa-libgl'
+  'mesa'
+)
+
 options=(
   # GCC 14 LTO causes segfault in LLVM under si_llvm_optimize_module
   # https://gitlab.freedesktop.org/mesa/mesa/-/issues/11140
@@ -99,8 +143,6 @@ options=(
 source=(
   "https://archive.mesa3d.org/mesa-${pkgver}.tar.xz"
   "https://archive.mesa3d.org/mesa-${pkgver}.tar.xz.sig"
-  # "mesa::git+https://gitlab.freedesktop.org/mesa/mesa.git#tag=mesa-${pkgver}"
-  'lib32.txt'
   'lib64.txt'
 )
 sha512sums=(
@@ -108,8 +150,8 @@ sha512sums=(
   'a8ddfa3ac31869e82a49d14aaab0659d0496ae77db3f32aa0d5d28de8e1e4cace9fa652451a050fbc79281e8461cd70e86ad464aa387533387187fbcb604aaab'
   # mesa-$pkgver.tar.xz.sig
   '61e01bc666f4d502ee5ed1c317f5fab1c2ddff332bdb92cb4257fe3a12bcb484dd7880bf178f8ee0496ad7a87ef52bb8d46c6f48830dd77c50c9f8ee7459e9ed'
-  'SKIP'
-  'SKIP'
+  # lib64.txt
+  'f4596476b55798353297de3b78ea39280825d1c102776ee8891e2d4b95f3b6f6b69da93e019c53404e54b65e4420c0340c91f506b5528a654ad3a2b74e01c8f0'
 )
 validpgpkeys=(
   # Eric Engestrom <eric@engestrom.ch>
@@ -148,11 +190,7 @@ for _crate in "${!_crates[@]}"; do
 done
 
 set_variables() {
-  arch_list=(
-    'x86_64'
-    'i686'
-  )
-  # arch_list=('i686')
+  build_arch='x86_64'
 
   srcdir="$srcdir"
   srcdir_mesa="${srcdir}/mesa-$pkgver"
@@ -448,76 +486,40 @@ prepare() {
   cd "$srcdir_mesa" || exit 1
 
   local meson_setup_args
+  meson_setup_args=()
 
-  for build_arch in "${arch_list[@]}"; do
-    set_variables
+  set_variables
 
-    meson_setup_args=(
-      # "$meson_build_dir/$build_arch"
-      # --wrap-mode=nofallback
-      # --reconfigure
+  meson_configure_defs+=(
+    # Link SPIR-V statically for 64-bit builds
+    'static-libclc=spirv64'
+
+    # CPU optimizations
+    'sse2=true'
+
+    # Tools
+    'tools=glsl,panfrost,intel-ui'
+  )
+
+  meson_setup_args+=(
+    --cross-file "$srcdir/lib64.txt"
+  )
+
+  set_LD_FLAGS "-m64"
+
+  BINDGEN_EXTRA_CLANG_ARGS="-m64"
+
+  # Add all definitions to the `meson_setup_args`
+  for def in "${meson_configure_defs[@]}"; do
+    meson_setup_args+=(
+      '-D' "$def"
     )
-
-    # Set libdir according to the architecture
-    if [[ "$build_arch" == "i686" ]]; then
-      meson_configure_defs+=(
-        # CLC
-        #
-        # Link SPIR-V statically for 64-bit builds
-        'static-libclc=[]'
-
-        # CPU optimizations
-        #
-        # SSE2
-        # Disable SSE2 for 32-bit builds
-        # 'sse2=false'
-        'sse2=true'
-
-        # Do not build tools
-        'tools=[]'
-      )
-      meson_setup_args+=(
-        --cross-file "$srcdir/lib32.txt"
-      )
-      BINDGEN_EXTRA_CLANG_ARGS="-m32"
-      set_LD_FLAGS "-m32"
-    elif [[ "$build_arch" == "x86_64" ]]; then
-      meson_configure_defs+=(
-        # Link SPIR-V statically for 64-bit builds
-        'static-libclc=spirv64'
-
-        # CPU optimizations
-        'sse2=true'
-
-        # Tools
-        'tools=glsl,panfrost,intel-ui'
-      )
-      meson_setup_args+=(
-        --cross-file "$srcdir/lib64.txt"
-      )
-      set_LD_FLAGS "-m64"
-      BINDGEN_EXTRA_CLANG_ARGS="-m64"
-    else
-      printf 'Unknown architecture: %s\n' "$build_arch" >&2
-      exit 1
-    fi
-
-    # Add all definitions to the `meson_setup_args`
-    for def in "${meson_configure_defs[@]}"; do
-      meson_setup_args+=(
-        '-D' "$def"
-      )
-    done
-
-    printf 'Setting up with arguments: %s\n' "${meson_setup_args[*]}"
-
-    # Export BINDGEN_EXTRA_CLANG_ARGS
-    export BINDGEN_EXTRA_CLANG_ARGS
-
-    meson setup "$meson_build_dir/$build_arch" "${meson_setup_args[@]}" || exit 1
   done
 
-  # meson setup --cross-file "$srcdir/x86_64.txt" "$meson_build_dir/x86_64" "${meson_setup_args[@]}"
+  # Export BINDGEN_EXTRA_CLANG_ARGS
+  export BINDGEN_EXTRA_CLANG_ARGS
+
+  meson setup "$meson_build_dir/$build_arch" "${meson_setup_args[@]}" || exit 1
 }
 
 build() {
@@ -526,101 +528,14 @@ build() {
   cd "$srcdir_mesa" || exit 1
 
   local meson_compile_args
+  meson_compile_args=(
+    -C "$meson_build_dir/$build_arch"
+  )
 
-  for build_arch in "${arch_list[@]}"; do
-    printf 'Compiling for %s\n' "$build_arch"
-    sleep '0.5'
-
-    meson_compile_args=(
-      -C "$meson_build_dir/$build_arch"
-    )
-
-    meson compile "${meson_compile_args[@]}" || exit 1
-  done
+  meson compile "${meson_compile_args[@]}" || exit 1
 }
 
-package_lib32-mesa-intel() {
-  # provides=(
-  #   'lib32-mesa'
-  #   'lib32-libglvnd'
-  # )
-  # conflicts=(
-  #   'lib32-mesa'
-  #   'lib32-libglvnd'
-  # )
-  # depends=(
-  #   'lib32-lua'
-  #   'lib32-libpng'
-  #   'lib32-llvm'
-  #   'lib32-libdrm'
-  # )
-
-  # set_variables
-
-  # mesa_arch_install i686
-
-  return
-}
-
-package_mesa-intel() {
-  depends=(
-    expat
-    gcc-libs
-    glibc
-    libdrm
-    libelf
-    libglvnd
-    libx11
-    libxcb
-    libxext
-    libxshmfence
-    libxxf86vm
-    llvm-libs
-    lm_sensors
-    spirv-tools
-    wayland
-    zlib
-    zstd
-    libpng
-    libva
-  )
-  provides=(
-    'vulkan-mesa-layers'
-    'opencl-driver'
-    'opengl-driver'
-    'vulkan-driver'
-    'vulkan-intel'
-    'vulkan-nouveau'
-    'vulkan-radeon'
-    'vulkan-swrast'
-    'vulkan-virtio'
-    'libva-mesa-driver'
-    'mesa-vdpau'
-    'mesa-libgl'
-    'mesa'
-  )
-  conflicts=(
-    'vulkan-mesa-layers'
-    'opencl-clover-mesa'
-    'vulkan-intel'
-    'vulkan-nouveau'
-    'vulkan-radeon'
-    'vulkan-swrast'
-    'vulkan-virtio'
-    'libva-mesa-driver'
-    'mesa-vdpau'
-    'mesa-libgl'
-    'mesa'
-  )
-
-
-  # # Probably temporary
-  # provides+=(
-  #   vulkan-intel
-  #   vulkan-virtio
-  #   vulkan-mesa-layers
-  # )
-
+package() {
   set_variables
 
   mesa_arch_install x86_64
@@ -642,95 +557,3 @@ mesa_arch_install() {
 
   meson "${meson_install_args[@]}"
 }
-
-# package_vulkan-swrast() {
-#   pkgdesc="Open-source Vulkan driver for CPUs (Software Rasterizer)"
-#   depends=(
-#     expat
-#     gcc-libs
-#     glibc
-#     libdrm
-#     libx11
-#     libxcb
-#     libxshmfence
-#     llvm-libs
-#     spirv-tools
-#     systemd-libs
-#     vulkan-icd-loader
-#     wayland
-#     xcb-util-keysyms
-#     zlib
-#     zstd
-#   )
-#   optdepends=("vulkan-mesa-layers: additional vulkan layers")
-#   conflicts=(vulkan-mesa)
-#   replaces=(vulkan-mesa)
-#   provides=(vulkan-driver)
-# }
-
-# package_vulkan-intel() {
-#   pkgdesc="Open-source Vulkan driver for Intel GPUs"
-#   depends=(
-#     expat
-#     gcc-libs
-#     glibc
-#     libdrm
-#     libx11
-#     libxcb
-#     libxshmfence
-#     spirv-tools
-#     systemd-libs
-#     vulkan-icd-loader
-#     wayland
-#     xcb-util-keysyms
-#     zlib
-#     zstd
-#   )
-#   optdepends=("vulkan-mesa-layers: additional vulkan layers")
-#   provides=(vulkan-driver)
-
-#   #   mv vkintel/* "$pkgdir"
-#   #
-#   #   install -Dm644 mesa-$pkgver/docs/license.rst -t "$pkgdir/usr/share/licenses/$pkgname"
-# }
-
-# package_vulkan-virtio() {
-#   pkgdesc="Open-source Vulkan driver for Virtio-GPU (Venus)"
-#   depends=(
-#     expat
-#     gcc-libs
-#     glibc
-#     libdrm
-#     libx11
-#     libxcb
-#     libxshmfence
-#     systemd-libs
-#     vulkan-icd-loader
-#     wayland
-#     xcb-util-keysyms
-#     zlib
-#     zstd
-#   )
-#   optdepends=("vulkan-mesa-layers: additional vulkan layers")
-#   provides=(vulkan-driver)
-# }
-
-# package_vulkan-mesa-layers() {
-#   pkgdesc="Mesa's Vulkan layers"
-#   depends=(
-#     gcc-libs
-#     glibc
-#     libdrm
-#     libpng
-#     libxcb
-#     wayland
-
-#     python
-#   )
-#   conflicts=(vulkan-mesa-layer)
-#   replaces=(vulkan-mesa-layer)
-
-#   #   mv vklayer/* "$pkgdir"
-#   #
-#   #   install -Dm644 mesa-$pkgver/docs/license.rst -t "$pkgdir/usr/share/licenses/$pkgname"
-# }
