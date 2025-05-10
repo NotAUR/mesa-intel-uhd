@@ -162,21 +162,21 @@ validpgpkeys=(
 
 # Rust crates for NVK, used as Meson subprojects
 declare -A _crates=(
-  equivalent      1.0.1
-  hashbrown       0.14.1
-  indexmap        2.2.6
-  once_cell       1.8.0
-  paste           1.0.14
-  pest            2.7.11
-  pest_derive     2.7.11
-  pest_generator  2.7.11
-  pest_meta       2.7.11
-  proc-macro2     1.0.86
-  quote           1.0.33
-  roxmltree       0.20.0
-  syn             2.0.68
-  ucd-trie        0.1.6
-  unicode-ident   1.0.12
+  equivalent 1.0.1
+  hashbrown 0.14.1
+  indexmap 2.2.6
+  once_cell 1.8.0
+  paste 1.0.14
+  pest 2.7.11
+  pest_derive 2.7.11
+  pest_generator 2.7.11
+  pest_meta 2.7.11
+  proc-macro2 1.0.86
+  quote 1.0.33
+  roxmltree 0.20.0
+  syn 2.0.68
+  ucd-trie 0.1.6
+  unicode-ident 1.0.12
 )
 
 for _crate in "${!_crates[@]}"; do
@@ -399,7 +399,7 @@ set_variables() {
     #
     # build gallium d3d12 with video support.
     'gallium-d3d12-video=disabled'
-    # 
+    #
     # List of gallium drivers for which rusticl will be enabled by default
     'gallium-rusticl-enable-drivers=auto'
     #
@@ -421,9 +421,8 @@ set_variables() {
   set_build_variables
 }
 
-
 set_LD_FLAGS() {
-  # If no arguments are given, just stop here 
+  # If no arguments are given, just stop here
   if ! [ $# -eq 0 ]; then
     for f in "$@"; do
       # Ignore if the string is empty
@@ -432,7 +431,7 @@ set_LD_FLAGS() {
       fi
       LDFLAGS="${LDFLAGS} $f"
     done
-  fi  
+  fi
 
   export LDFLAGS
 }
