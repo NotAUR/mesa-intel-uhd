@@ -24,7 +24,7 @@
 
 pkgname=mesa-intel-uhd-730
 pkgrel=1
-pkgver=25.0.3
+pkgver=25.1.1
 arch=('x86_64')
 makedepends=(
   clang
@@ -147,9 +147,9 @@ source=(
 )
 sha512sums=(
   # mesa-$pkgver.tar.xz
-  'a8ddfa3ac31869e82a49d14aaab0659d0496ae77db3f32aa0d5d28de8e1e4cace9fa652451a050fbc79281e8461cd70e86ad464aa387533387187fbcb604aaab'
+  '8000fec61da3b7c0355b74458c52f8faeb562398a1882d68cd31a253848edd3333072521ec52f8c5c1a62d909afd6667803d43cb54027d0af3d944f1add27aae'
   # mesa-$pkgver.tar.xz.sig
-  '61e01bc666f4d502ee5ed1c317f5fab1c2ddff332bdb92cb4257fe3a12bcb484dd7880bf178f8ee0496ad7a87ef52bb8d46c6f48830dd77c50c9f8ee7459e9ed'
+  '76750c3557a719d3725560666ce86cc944bea68f6fcc227cc62d1f936fd243191854ecc7ffa16ab0984881a99003dc6e9d287f09133e9418296959a7b84549c6'
   # lib64.txt
   'f4596476b55798353297de3b78ea39280825d1c102776ee8891e2d4b95f3b6f6b69da93e019c53404e54b65e4420c0340c91f506b5528a654ad3a2b74e01c8f0'
 )
@@ -220,7 +220,7 @@ set_variables() {
     'microsoft-clc=disabled'
 
     # Vulkan
-    'vulkan-drivers=intel,intel_hasvk,virtio,gfxstream,panfrost,freedreno'
+    'vulkan-drivers=intel,intel_hasvk,virtio,gfxstream,freedreno'
     # 'vulkan-drivers=auto'
     #
     # Shader caching
@@ -267,7 +267,7 @@ set_variables() {
     # Debug
     #
     # Valgrind
-    'valgrind=enabled'
+    'valgrind=disabled'
     'libunwind=disabled'
 
     # Other
@@ -288,15 +288,15 @@ set_variables() {
     # 'selinux=false'
 
     # Deprecated
-    'osmesa=true'
+    # 'osmesa=false'
 
     # OpenGL
     #
     # Whether to build a shared or static glapi.
-    'shared-glapi=enabled'
+    # 'shared-glapi=disabled'
     #
     # GLES
-    # 'gles1=enabled'
+    'gles1=enabled'
     'gles1=disabled'
     'gles2=enabled'
     #
@@ -307,17 +307,17 @@ set_variables() {
     'opengl=true'
 
     # Compression
+    'zstd=disabled'
     'zlib=enabled'
 
     # Enable TensorFlow Lite delegate.
-    'teflon=true'
+    'teflon=false'
 
     # Video codecs
     'video-codecs=all'
 
     # Optimizations
-    'power8=disabled'
-    'zstd=disabled'
+    # 'power8=disabled'
     'datasources=[]'
 
     # Optional for Iris
@@ -328,6 +328,10 @@ set_variables() {
     # the default driconf file is hardcoded into Mesa. Requires expat.
     'xmlconfig=enabled'
 
+    # Windows
+    #
+    'min-windows-version=10'
+
     # VMWare
     #
     # vmware-mks-stats requires gallium VMware/svga driver.
@@ -336,7 +340,7 @@ set_variables() {
 
     # X11, Xlib, etc.
     'xlib-lease=enabled'
-    'legacy-x11=dri2'
+    'legacy-x11=none'
 
     # Android
     #
@@ -353,11 +357,8 @@ set_variables() {
     #
     # the window system EGL assumes for EGL_DEFAULT_DISPLAY
     'egl-native-platform=auto'
-    # 'egl-native-platform=wayland,x11,android,drm,surfaceless'
-    # 'egl-native-platform=wayland,x11,drm,surfaceless'
-    # 'egl-native-platform=wayland'
 
-    # Android-reltaed
+    # Android-related
     # Build against android-stub
     'android-stub=false'
     'android-strict=false'
@@ -368,7 +369,7 @@ set_variables() {
     #
     # Drivers
     # 'gallium-drivers=iris,i915,zink,panfrost,virgl,svga,softpipe'
-    'gallium-drivers=iris,i915,zink,panfrost,virgl,svga,softpipe,llvmpipe'
+    'gallium-drivers=iris,i915,zink,virgl,svga,softpipe,llvmpipe'
     #
     # Rust
     'gallium-rusticl=true'
@@ -380,8 +381,8 @@ set_variables() {
     # Enable VA
     'gallium-va=enabled'
     'gallium-rusticl-enable-drivers=auto'
-    'gallium-xa=enabled'
-    'gallium-nine=true'
+    # 'gallium-xa=enabled'
+    # 'gallium-nine=true'
     # 'gallium-opencl=icd'
 
     #
@@ -389,7 +390,7 @@ set_variables() {
     'gallium-extra-hud=false'
     #
     # build gallium d3d12 with graphics pipeline support.
-    gallium-d3d12-graphics=disabled
+    'gallium-d3d12-graphics=disabled'
     #
     # build gallium d3d12 with video support.
     'gallium-d3d12-video=disabled'
@@ -403,7 +404,9 @@ set_variables() {
     # List of gallium drivers for which rusticl will be enabled by default
     'gallium-rusticl-enable-drivers=auto'
     #
-    'unversion-libgallium=false'
+    'unversion-libgallium=true'
+    # Apparently this option is only present in the `main` branch of `https://gitlab.freedesktop.org/mesa/mesa/`
+    # 'gallium-mediafoundation=enabled'
 
     # expat
     'expat=auto'
@@ -497,7 +500,7 @@ prepare() {
     'sse2=true'
 
     # Tools
-    'tools=glsl,panfrost,intel-ui'
+    'tools=glsl,intel-ui'
   )
 
   meson_setup_args+=(
